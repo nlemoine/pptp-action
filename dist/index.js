@@ -3624,6 +3624,7 @@ file /etc/ppp/options.pptp
 ipparam myvpn
 `;
             yield exec.exec(`sudo echo "${content}" > /etc/ppp/peers/myvpn`);
+            yield exec.exec(`sudo cat /etc/ppp/peers/myvpn`);
             const options = `lock
 noauth
 refuse-pap
@@ -3633,9 +3634,10 @@ nobsdcomp
 nodeflate
 require-mppe-128`;
             yield exec.exec(`sudo echo "${options}" > /etc/ppp/options.pptp`);
+            yield exec.exec(`sudo cat /etc/ppp/options.pptp`);
             yield exec.exec(`sudo echo "/sbin/route add default ppp0" > /etc/ppp/ip-up.local`);
             yield exec.exec(`sudo chmod 755 /etc/ppp/ip-up.local`);
-            yield exec.exec(`sudo pppd call myvpn`);
+            yield exec.exec(`sudo pppd call myvpn debug dump logfd 2 updetach`);
             // await exec.exec('sudo modprobe nf_conntrack_pptp')
             // await exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach')
         }
