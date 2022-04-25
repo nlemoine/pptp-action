@@ -34,7 +34,7 @@ async function run(): Promise<void> {
 
     await exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach')
   } catch (error) {
-    core.setFailed(error.message)
+    // core.setFailed(error.message)
   } finally {
     // await exec.exec('sudo tail -n 30 /var/log/syslog')
   }
@@ -44,7 +44,7 @@ async function cleanup(): Promise<void> {
   try {
     await exec.exec('sudo pkill -TERM pppd')
   } catch (error) {
-    core.warning(error.message)
+    // core.warning(error.message)
   }
 }
 
