@@ -36,7 +36,7 @@ async function run(): Promise<void> {
   } catch (error) {
     core.setFailed(error.message)
   } finally {
-    await exec.exec('sudo tail -n 30 /var/log/syslog')
+    // await exec.exec('sudo tail -n 30 /var/log/syslog')
   }
 }
 
