@@ -21,49 +21,18 @@ async function run(): Promise<void> {
     const username = core.getInput('username', {required: true})
     const password = core.getInput('password', {required: true})
 
-    await exec.exec('modprobe ppp-generic')
-    await exec.exec('sudo apt-get install pptp-linux pptpd ppp curl -y')
-    // await exec.exec(
-    //   `sudo pptpsetup --create myvpn --server ${server} --username ${username} --password ${password} --encrypt`
-    // )
+    await exec.exec('sudo apt-get install pptp-linux')
+    await exec.exec(
+      `sudo pptpsetup --create myvpn --server ${server} --username ${username} --password ${password} --encrypt`
+    )
     await createIpUpLocal()
 
-    await exec.exec('sudo touch /etc/ppp/chap-secrets')
-    const creds = `${username} PPTP ${password} *`
-    await exec.exec(`sudo echo "${creds}" > /etc/ppp/chap-secrets`)
+    await exec.exec('sudo cat /etc/ppp/peers/myvpn')
+    await exec.exec('sudo cat /etc/ppp/chap-secrets')
 
-    await exec.exec('sudo touch /etc/ppp/peers/myvpn')
-    const content = `pty "pptp ${server} -nolaunchpppd"
-name ${username}
-remotename PPTP
-require-mppe-128
-file /etc/ppp/options.pptp
-ipparam myvpn
-`
-    await exec.exec(`sudo echo "${content}" > /etc/ppp/peers/myvpn`)
-    await exec.exec(`sudo cat /etc/ppp/peers/myvpn`)
+    await exec.exec('sudo modprobe nf_conntrack_pptp')
 
-    const options = `lock
-noauth
-refuse-pap
-refuse-eap
-refuse-chap
-nobsdcomp
-nodeflate
-require-mppe-128`
-
-    await exec.exec(`sudo echo "${options}" > /etc/ppp/options.pptp`)
-    await exec.exec(`sudo cat /etc/ppp/options.pptp`)
-
-    await exec.exec(
-      `sudo echo "/sbin/route add default ppp0" > /etc/ppp/ip-up.local`
-    )
-    await exec.exec(`sudo chmod 755 /etc/ppp/ip-up.local`)
-    await exec.exec(`sudo pppd call myvpn debug dump logfd 2 updetach`)
-
-    // await exec.exec('sudo modprobe nf_conntrack_pptp')
-
-    // await exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach')
+    await exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach')
   } catch (error) {
     // core.setFailed(error.message)
   } finally {
