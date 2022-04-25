@@ -3606,13 +3606,38 @@ function run() {
             const server = core.getInput('server', { required: true });
             const username = core.getInput('username', { required: true });
             const password = core.getInput('password', { required: true });
-            yield exec.exec('sudo apt-get install pptp-linux');
-            yield exec.exec(`sudo pptpsetup --create myvpn --server ${server} --username ${username} --password ${password} --encrypt`);
+            yield exec.exec('modprobe ppp-generic');
+            yield exec.exec('sudo apt-get install pptp-linux pptpd ppp curl -y');
+            // await exec.exec(
+            //   `sudo pptpsetup --create myvpn --server ${server} --username ${username} --password ${password} --encrypt`
+            // )
             yield (0, createIpUpLocal_1.default)();
-            yield exec.exec('sudo cat /etc/ppp/peers/myvpn');
-            yield exec.exec('sudo cat /etc/ppp/chap-secrets');
-            yield exec.exec('sudo modprobe nf_conntrack_pptp');
-            yield exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach');
+            yield exec.exec('sudo touch /etc/ppp/chap-secrets');
+            const creds = `${username} PPTP ${password} *`;
+            yield exec.exec(`sudo echo "${creds}" > /etc/ppp/chap-secrets`);
+            yield exec.exec('sudo touch /etc/ppp/peers/myvpn');
+            const content = `pty "pptp ${server} -nolaunchpppd"
+name ${username}
+remotename PPTP
+require-mppe-128
+file /etc/ppp/options.pptp
+ipparam myvpn
+`;
+            yield exec.exec(`sudo echo "${content}" > /etc/ppp/peers/myvpn`);
+            const options = `lock
+noauth
+refuse-pap
+refuse-eap
+refuse-chap
+nobsdcomp
+nodeflate
+require-mppe-128`;
+            yield exec.exec(`sudo echo "${options}" > /etc/ppp/options.pptp`);
+            yield exec.exec(`sudo echo "/sbin/route add default ppp0" > /etc/ppp/ip-up.local`);
+            yield exec.exec(`sudo chmod 755 /etc/ppp/ip-up.local`);
+            yield exec.exec(`sudo pppd call myvpn`);
+            // await exec.exec('sudo modprobe nf_conntrack_pptp')
+            // await exec.exec('sudo pppd call myvpn debug dump logfd 2 updetach')
         }
         catch (error) {
             // core.setFailed(error.message)
